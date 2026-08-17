@@ -1,0 +1,79 @@
+/*
+ * Charte visuelle partagée avec poker-planning (dépôt sœur), limitée à la page d'accueil et à
+ * l'écran de saisie du nom du participant — le canvas d'event storming (tldraw) n'importe pas
+ * ce fichier et garde son propre style.
+ *
+ * Valeurs de palette reprises telles quelles de poker-planning/frontend/tailwind.config.js
+ * (theme.extend.colors.primary / accent). À resynchroniser manuellement si cette palette source
+ * change.
+ */
+
+:root {
+  --color-primary-50: #f0f8f5;
+  --color-primary-100: #d4f1e8;
+  --color-primary-200: #a8e4d0;
+  --color-primary-300: #7cd7b9;
+  --color-primary-400: #52c9a1;
+  --color-primary-500: #32b98c;
+  --color-primary-600: #2a9b75;
+  --color-primary-700: #227d5e;
+  --color-primary-800: #1a5f47;
+  --color-primary-900: #134130;
+
+  --color-accent-50: #faf6fc;
+  --color-accent-100: #f0e6f7;
+  --color-accent-200: #dccce9;
+  --color-accent-300: #c7b3db;
+  --color-accent-400: #a666c1;
+  --color-accent-500: #672575;
+  --color-accent-600: #5a2068;
+  --color-accent-700: #4d1b5a;
+  --color-accent-800: #40164d;
+  --color-accent-900: #331040;
+
+  --radius-md: 8px;
+  --shadow-card: 0 1px 8px rgba(0, 0, 0, 0.1);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --transition-fast: 150ms ease;
+  --transition-base: 300ms ease;
+}
+
+/* Titre de mise en avant (ex: "Bienvenue", "Ateliers d'event storming") — reprend
+   `text-primary-600 font-bold` du Header de poker-planning. */
+.charter-title {
+  color: var(--color-primary-600);
+  font-weight: 700;
+}
+
+/* Bouton d'action principale (ex: "Continuer", "Créer un atelier") — reprend le style des
+   boutons principaux de poker-planning (fond primary-600, hover primary-700, coins arrondis,
+   gras, transition douce, léger retour d'échelle au survol/clic). */
+.charter-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-600);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-base),
+    transform var(--transition-fast);
+}
+
+.charter-button:hover:not(:disabled) {
+  background: var(--color-primary-700);
+  transform: scale(1.02);
+}
+
+.charter-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.charter-button:disabled {
+  background: #ced4da;
+  color: #495057;
+  cursor: not-allowed;
+  transform: none;
+}
