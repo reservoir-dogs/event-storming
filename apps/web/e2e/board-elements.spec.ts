@@ -77,7 +77,7 @@ async function screenCenterOfKind(page: Page, kindId: string) {
   }, kindId)
 }
 
-test('the toolbar offers the nine event storming element types, in order', async ({ page }) => {
+test('the toolbar offers the ten event storming element types, in order', async ({ page }) => {
   await openNewWorkshop(page, 'Atelier types')
 
   const kindTitles = await page.locator('[data-es-toolbar] button[draggable="true"]').evaluateAll((buttons) =>
@@ -85,14 +85,15 @@ test('the toolbar offers the nine event storming element types, in order', async
   )
 
   expect(kindTitles).toEqual([
+    'Actor (X)',
     'Domain Event (E)',
-    'Commande (C)',
-    'Acteur (X)',
-    'Agrégat (A)',
-    'Politique (P)',
-    'Système (S)',
-    "Message d'intégration (I)",
-    'Point chaud (H)',
+    'Command (C)',
+    'Query Model (R)',
+    'Aggregate (A)',
+    'Policy (P)',
+    'System (S)',
+    'Integration Message (I)',
+    'Hotspot (H)',
     'Question (Q)',
   ])
 })
@@ -100,21 +101,41 @@ test('the toolbar offers the nine event storming element types, in order', async
 test('a type dragged from the toolbar creates a labelled post-it where it is dropped', async ({ page }) => {
   await openNewWorkshop(page, 'Atelier glisser-déposer')
 
-  await page.dragAndDrop('[data-es-toolbar] button[title^="Système"]', '.tl-canvas', {
+  await page.dragAndDrop('[data-es-toolbar] button[title^="System"]', '.tl-canvas', {
     targetPosition: { x: 500, y: 300 },
   })
   await typeLabel(page, 'Facturation')
 
   const shapes = await readBoard(page)
   expect(shapes).toHaveLength(1)
-  expect(shapes[0]).toMatchObject({ type: 'geo', kind: 'system', color: 'red', width: 200, height: 200 })
+  expect(shapes[0]).toMatchObject({ type: 'geo', kind: 'system', color: 'light-red', width: 200, height: 200 })
+})
+
+test('a query model dragged from the toolbar creates a labelled post-it, included in the Mermaid export', async ({
+  page,
+}) => {
+  await openNewWorkshop(page, 'Atelier query model')
+
+  await page.dragAndDrop('[data-es-toolbar] button[title^="Query Model"]', '.tl-canvas', {
+    targetPosition: { x: 500, y: 300 },
+  })
+  await typeLabel(page, 'Liste des produits')
+
+  const shapes = await readBoard(page)
+  expect(shapes).toHaveLength(1)
+  expect(shapes[0]).toMatchObject({ type: 'geo', kind: 'query-model', color: 'green', width: 200, height: 200 })
+
+  await page.getByTestId('main-menu.button').click()
+  await page.getByTestId('main-menu.copy-mermaid').click()
+  const mermaid = await page.evaluate(() => navigator.clipboard.readText())
+  expect(mermaid).toContain('Liste des produits')
 })
 
 test('dropping a type on the toolbar itself creates nothing', async ({ page }) => {
   await openNewWorkshop(page, 'Atelier dépôt annulé')
 
   await page.dragAndDrop(
-    '[data-es-toolbar] button[title^="Système"]',
+    '[data-es-toolbar] button[title^="System"]',
     '[data-es-toolbar] button[title^="Question"]',
   )
 
@@ -124,11 +145,11 @@ test('dropping a type on the toolbar itself creates nothing', async ({ page }) =
 test('a post-it dropped inside a swimlane belongs to it', async ({ page }) => {
   await openNewWorkshop(page, 'Atelier couloir')
 
-  await page.getByTitle(/^Couloir de nage/).click()
+  await page.getByTitle(/^Swimlane/).click()
   await page.locator('.tl-canvas').click({ position: { x: 500, y: 350 } })
   await page.keyboard.press('Escape')
 
-  await page.dragAndDrop('[data-es-toolbar] button[title^="Commande"]', '.tl-canvas', {
+  await page.dragAndDrop('[data-es-toolbar] button[title^="Command"]', '.tl-canvas', {
     targetPosition: { x: 500, y: 350 },
   })
   await typeLabel(page, 'Passer commande')
@@ -137,37 +158,58 @@ test('a post-it dropped inside a swimlane belongs to it', async ({ page }) => {
   expect(postIt?.parentType).toBe('frame')
 })
 
-test('hotspots and questions stand out from the types sharing their color', async ({ page }) => {
-  await openNewWorkshop(page, 'Atelier couleurs partagées')
+test('question and query model stand out from each other despite sharing green', async ({ page }) => {
+  await openNewWorkshop(page, 'Atelier couleurs partagées (vert)')
 
-  await page.getByTitle(/^Point chaud/).click()
+  await page.getByTitle(/^Question/).click()
   await page.locator('.tl-canvas').click({ position: { x: 400, y: 250 } })
-  await typeLabel(page, 'Qui valide ?')
+  await typeLabel(page, 'Et si le stock manque ?')
 
-  await page.getByTitle(/^Système/).click()
+  await page.getByTitle(/^Query Model/).click()
   await page.locator('.tl-canvas').click({ position: { x: 800, y: 250 } })
-  await typeLabel(page, 'Facturation')
+  await typeLabel(page, 'Liste des produits')
 
   const shapes = await readBoard(page)
-  const kindsByColor = shapes.filter((shape) => shape.color === 'red').map((shape) => shape.kind)
-  expect(kindsByColor.sort()).toEqual(['hotspot', 'system'])
+  const kindsByColor = shapes.filter((shape) => shape.color === 'green').map((shape) => shape.kind)
+  expect(kindsByColor.sort()).toEqual(['query-model', 'question'].sort())
 
-  // Fond dans la couleur pleine du type et libellé blanc pour le point chaud, fond teinté et libellé
-  // sombre pour le système : les deux rouges ne se confondent pas.
-  expect(shapes.find((shape) => shape.kind === 'hotspot')).toMatchObject({
+  // Fond dans la couleur pleine du type et libellé blanc pour la question, fond teinté et libellé
+  // sombre pour le query model : les deux verts ne se confondent pas.
+  expect(shapes.find((shape) => shape.kind === 'question')).toMatchObject({
     fill: 'fill',
     labelColor: 'white',
   })
-  expect(shapes.find((shape) => shape.kind === 'system')).toMatchObject({
+  expect(shapes.find((shape) => shape.kind === 'query-model')).toMatchObject({
     fill: 'solid',
     labelColor: 'black',
   })
 })
 
+test('actor and aggregate stand out from each other by size despite sharing yellow and its intensity', async ({
+  page,
+}) => {
+  await openNewWorkshop(page, 'Atelier couleurs partagées (jaune)')
+
+  await page.getByTitle(/^Actor/).click()
+  await page.locator('.tl-canvas').click({ position: { x: 400, y: 250 } })
+  await typeLabel(page, 'Client')
+
+  await page.getByTitle(/^Aggregate/).click()
+  await page.locator('.tl-canvas').click({ position: { x: 800, y: 250 } })
+  await typeLabel(page, 'Commande')
+
+  const shapes = await readBoard(page)
+  const kindsByColor = shapes.filter((shape) => shape.color === 'yellow').map((shape) => shape.kind)
+  expect(kindsByColor.sort()).toEqual(['actor', 'aggregate'].sort())
+
+  expect(shapes.find((shape) => shape.kind === 'actor')).toMatchObject({ width: 160, height: 160 })
+  expect(shapes.find((shape) => shape.kind === 'aggregate')).toMatchObject({ width: 200, height: 200 })
+})
+
 test('dragging a connection handle onto another post-it links the two', async ({ page }) => {
   await openNewWorkshop(page, 'Atelier poignées')
 
-  await page.getByTitle(/^Commande/).click()
+  await page.getByTitle(/^Command/).click()
   await page.locator('.tl-canvas').click({ position: { x: 400, y: 250 } })
   await typeLabel(page, 'Passer commande')
 
@@ -200,11 +242,11 @@ test('dragging a connection handle onto another post-it links the two', async ({
 test('linking the selection needs exactly two post-its', async ({ page }) => {
   await openNewWorkshop(page, 'Atelier relier la sélection')
 
-  await page.getByTitle(/^Commande/).click()
+  await page.getByTitle(/^Command/).click()
   await page.locator('.tl-canvas').click({ position: { x: 400, y: 250 } })
   await typeLabel(page, 'Passer commande')
 
-  const linkSelection = page.getByTitle('Relier la sélection')
+  const linkSelection = page.getByTitle('Link selection')
   await expect(linkSelection).toBeDisabled()
 
   await page.getByTitle(/^Domain Event/).click()
@@ -230,7 +272,7 @@ test('linking the selection needs exactly two post-its', async ({ page }) => {
 test('post-its from older workshops keep their kind and export behaviour', async ({ page }) => {
   await openNewWorkshop(page, 'Atelier antérieur')
 
-  await page.getByTitle(/^Point chaud/).click()
+  await page.getByTitle(/^Hotspot/).click()
   await page.locator('.tl-canvas').click({ position: { x: 400, y: 250 } })
   await typeLabel(page, 'Qui valide ?')
 
@@ -263,16 +305,16 @@ test('post-its from older workshops keep their kind and export behaviour', async
 test('the Mermaid export leaves out hotspots, questions and the links that touch them', async ({ page }) => {
   await openNewWorkshop(page, 'Atelier export Mermaid')
 
-  await page.getByTitle(/^Commande/).click()
+  await page.getByTitle(/^Command/).click()
   await page.locator('.tl-canvas').click({ position: { x: 400, y: 250 } })
   await typeLabel(page, 'Passer commande')
 
-  await page.getByTitle(/^Point chaud/).click()
+  await page.getByTitle(/^Hotspot/).click()
   await page.locator('.tl-canvas').click({ position: { x: 800, y: 250 } })
   await typeLabel(page, 'Qui valide ?')
 
   await page.keyboard.press('Control+a')
-  await page.getByTitle('Relier la sélection').click()
+  await page.getByTitle('Link selection').click()
 
   await page.getByTestId('main-menu.button').click()
   await page.getByTestId('main-menu.copy-mermaid').click()

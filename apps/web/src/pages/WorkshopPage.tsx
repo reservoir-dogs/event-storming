@@ -55,13 +55,16 @@ const COMPONENTS: TLComponents = {
 
 const SHAPE_UTILS = [FixedSizeGeoShapeUtil, UnlabeledArrowShapeUtil]
 
-// Les lettres seules E/C/X/A/P/S/I/H/Q (cf. `eventStormingKinds.ts`) sélectionnent les types de
+// Les lettres seules E/C/X/A/P/S/I/R/H/Q (cf. `eventStormingKinds.ts`) sélectionnent les types de
 // post-its via le gestionnaire `keydown` de `EventStormingToolbar`, indépendant du système de
 // raccourcis natif de tldraw. Plusieurs de ces lettres coïncident cependant avec des raccourcis
 // natifs (gomme/e, dessin/x, flèche/a, main/h, verrouillage d'outil/q) : on les désactive ou on les
 // déplace vers une autre lettre ici, pour que ces deux systèmes de raccourcis ne se déclenchent
 // jamais tous les deux sur la même touche. 'S' (Système) et 'I' (Message d'intégration) n'ont, eux,
 // aucun équivalent natif à neutraliser.
+// 'R' (Query Model) n'a, comme 'S' et 'I', aucun équivalent natif à neutraliser : vérifié dans un
+// navigateur (appui sur 'r' juste après avoir chargé un atelier, sans clic préalable), l'outil geo
+// s'arme bien dans la couleur du Query Model, sans effet de bord d'un raccourci natif tldraw.
 const EDITOR_OVERRIDES: TLUiOverrides = {
   tools(_editor, tools) {
     return {

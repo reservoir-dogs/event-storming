@@ -34,6 +34,20 @@ describe('resolveEventStormingKind', () => {
     expect(resolveEventStormingKind(geoShape({ color: 'green', fill: 'solid' }))?.id).toBe('question')
   })
 
+  // La table historique fige la couleur que chaque type avait avant l'alignement sur le canon
+  // communautaire (agrégat jaune, système/politique/message d'intégration réassignés) : elle ne
+  // doit pas suivre les couleurs actuelles de `EVENT_STORMING_KINDS`, sous peine de faire résoudre
+  // un vieux post-it gris vers le mauvais type.
+  it('keeps resolving legacy unmarked post-its by their historical color, unaffected by current kind colors', () => {
+    expect(resolveEventStormingKind(geoShape({ color: 'grey', fill: 'solid' }))?.id).toBe('aggregate')
+    expect(resolveEventStormingKind(geoShape({ color: 'yellow', fill: 'solid' }))?.id).toBe('actor')
+  })
+
+  it('reads the query model kind marked on the shape, sharing green with the (unmarked-only) question fallback', () => {
+    const shape = geoShape({ color: 'green', fill: 'solid' }, { [ES_KIND_META_KEY]: 'query-model' })
+    expect(resolveEventStormingKind(shape)?.id).toBe('query-model')
+  })
+
   it('falls back to the color when the marked kind is unknown', () => {
     const shape = geoShape({ color: 'orange', fill: 'solid' }, { [ES_KIND_META_KEY]: 'not-a-kind' })
     expect(resolveEventStormingKind(shape)?.id).toBe('domain-event')

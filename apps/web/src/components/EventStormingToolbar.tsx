@@ -4,7 +4,7 @@ import { createEventStormingLink } from '../shapes/createEventStormingLink'
 import { TOOLBAR_DROP_GUARD_ATTRIBUTE, setDraggedKind } from '../shapes/eventStormingKindDrag'
 import { getSelectedKind } from '../shapes/eventStormingKindSelection'
 import { EVENT_STORMING_KINDS, KIND_COLOR_HEX, type EventStormingKind } from '../shapes/eventStormingKinds'
-import { armPostItTool } from '../shapes/eventStormingPostIts'
+import { DEFAULT_POST_IT_SIZE, armPostItTool } from '../shapes/eventStormingPostIts'
 import { resolveEventStormingKind } from '../shapes/resolveEventStormingKind'
 
 function SelectIcon() {
@@ -61,18 +61,26 @@ function EraserIcon() {
   )
 }
 
+// Taille de la pastille dans la barre d'outils, pour un type de taille standard sur le canvas.
+const DEFAULT_SWATCH_SIZE = 14
+
 // Aperçu du type : bordure dans la couleur du type, et intérieur rempli de cette même couleur pour
 // les types à fond appuyé (point chaud, question). Sans ce remplissage, deux types partageant une
 // couleur — système et point chaud en rouge, message d'intégration et question en vert — auraient le
-// même aperçu.
+// même aperçu. L'acteur et l'agrégat, eux, partagent à la fois couleur et intensité (tous deux
+// jaune/teinté) : seule leur taille les distingue sur le canvas, donc la pastille est mise à
+// l'échelle de la taille réelle du type pour rester distinguable ici aussi (voir
+// `EventStormingKind.size` dans `eventStormingKinds.ts`).
 function KindSwatch({ kind }: Readonly<{ kind: EventStormingKind }>) {
   const color = KIND_COLOR_HEX[kind.color]
+  const scale = kind.size ? kind.size.w / DEFAULT_POST_IT_SIZE.w : 1
+  const size = Math.round(DEFAULT_SWATCH_SIZE * scale)
 
   return (
     <span
       style={{
-        width: 14,
-        height: 14,
+        width: size,
+        height: size,
         borderRadius: 3,
         border: `2px solid ${color}`,
         background: kind.fillEmphasis === 'strong' ? color : 'transparent',
@@ -205,14 +213,14 @@ export const EventStormingToolbar = track(function EventStormingToolbar() {
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        title={expanded ? 'Réduire la boîte à outils' : 'Déplier la boîte à outils'}
+        title={expanded ? 'Collapse toolbar' : 'Expand toolbar'}
         style={{ alignSelf: expanded ? 'flex-end' : 'center', border: 'none', background: 'none', cursor: 'pointer' }}
       >
         {expanded ? '«' : '»'}
       </button>
 
       <ToolButton
-        label="Sélection"
+        label="Selection"
         shortcutLabel="V"
         expanded={expanded}
         isActive={currentToolId === 'select'}
@@ -238,7 +246,7 @@ export const EventStormingToolbar = track(function EventStormingToolbar() {
       ))}
 
       <ToolButton
-        label="Couloir de nage"
+        label="Swimlane"
         shortcutLabel="N"
         expanded={expanded}
         isActive={currentToolId === 'frame'}
@@ -246,7 +254,7 @@ export const EventStormingToolbar = track(function EventStormingToolbar() {
         onClick={() => editor.setCurrentTool('frame')}
       />
       <ToolButton
-        label="Lien"
+        label="Link"
         shortcutLabel="L"
         expanded={expanded}
         isActive={currentToolId === 'arrow'}
@@ -254,7 +262,7 @@ export const EventStormingToolbar = track(function EventStormingToolbar() {
         onClick={() => editor.setCurrentTool('arrow')}
       />
       <ToolButton
-        label="Relier la sélection"
+        label="Link selection"
         expanded={expanded}
         isActive={false}
         isDisabled={postItPairToLink === undefined}
@@ -265,7 +273,7 @@ export const EventStormingToolbar = track(function EventStormingToolbar() {
         }}
       />
       <ToolButton
-        label="Gomme"
+        label="Eraser"
         shortcutLabel="G"
         expanded={expanded}
         isActive={currentToolId === 'eraser'}

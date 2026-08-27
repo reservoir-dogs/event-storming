@@ -8,7 +8,6 @@ import {
   ExportFileContentSubMenu,
   InputModeMenu,
   KeyboardShortcutsMenuItem,
-  LanguageMenu,
   TldrawUiMenuGroup as UntypedTldrawUiMenuGroup,
   TldrawUiMenuItem,
   TldrawUiMenuSubmenu as UntypedTldrawUiMenuSubmenu,
@@ -56,12 +55,12 @@ async function handleCopyLink() {
 }
 
 function CopyLinkMenuItem() {
-  return <TldrawUiMenuItem id="copy-link" label="Copier le lien de l'atelier" onSelect={handleCopyLink} />
+  return <TldrawUiMenuItem id="copy-link" label="Copy workshop link" onSelect={handleCopyLink} />
 }
 
 function LeaveWorkshopMenuItem() {
   const navigate = useNavigate()
-  return <TldrawUiMenuItem id="leave-workshop" label="Quitter l'atelier" onSelect={() => navigate('/')} />
+  return <TldrawUiMenuItem id="leave-workshop" label="Leave workshop" onSelect={() => navigate('/')} />
 }
 
 function CopyMermaidMenuItem() {
@@ -72,7 +71,7 @@ function CopyMermaidMenuItem() {
   }
 
   return (
-    <TldrawUiMenuItem id="copy-mermaid" label="Copier le diagramme (Mermaid)" onSelect={handleCopyMermaid} />
+    <TldrawUiMenuItem id="copy-mermaid" label="Copy diagram (Mermaid)" onSelect={handleCopyMermaid} />
   )
 }
 
@@ -82,13 +81,13 @@ function DeleteWorkshopMenuItem() {
 
   async function handleDelete() {
     if (!id) return
-    const confirmed = globalThis.confirm("Supprimer définitivement cet atelier ? Cette action est irréversible.")
+    const confirmed = globalThis.confirm('Permanently delete this workshop? This action is irreversible.')
     if (!confirmed) return
     await deleteWorkshop(id)
     navigate('/')
   }
 
-  return <TldrawUiMenuItem id="delete-workshop" label="Supprimer l'atelier" onSelect={handleDelete} />
+  return <TldrawUiMenuItem id="delete-workshop" label="Delete workshop" onSelect={handleDelete} />
 }
 
 // Reprend `PreferencesGroup` de tldraw en retirant les bascules grille/accrochage : ces deux
@@ -113,7 +112,6 @@ function EventStormingPreferencesGroup() {
           <ColorSchemeMenu />
         </TldrawUiMenuGroup>
       </TldrawUiMenuSubmenu>
-      <LanguageMenu />
       <KeyboardShortcutsMenuItem />
     </TldrawUiMenuGroup>
   )

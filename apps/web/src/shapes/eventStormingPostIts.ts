@@ -13,11 +13,19 @@ import {
 import { setSelectedKind } from './eventStormingKindSelection'
 import type { EventStormingKind } from './eventStormingKinds'
 
-// Taille de référence commune à tous les post-its : celle que tldraw attribue nativement à
+// Taille de référence commune à la plupart des post-its : celle que tldraw attribue nativement à
 // n'importe quel rectangle créé d'un simple clic (avant tout agrandissement lié au contenu du
-// libellé), et qui correspond à la taille observée pour le post-it "Acteur". Elle est imposée par
-// `FixedSizeGeoShapeUtil` ; elle n'est reprise ici que pour centrer un post-it sur un point.
-export const POST_IT_SIZE = { w: 200, h: 200 }
+// libellé). Seul l'acteur y déroge (`EventStormingKind.size`, plus petit), pour se distinguer de
+// l'agrégat qui partage sa couleur et son intensité de fond (voir le commentaire sur
+// `EVENT_STORMING_KINDS` dans `eventStormingKinds.ts`). `sizeForKind` est la seule façon correcte
+// d'obtenir la taille d'un type : ne pas relire cette constante directement en dehors d'elle.
+export const DEFAULT_POST_IT_SIZE = { w: 200, h: 200 }
+
+// Taille effective d'un type de post-it : celle qu'il porte explicitement, sinon la taille par
+// défaut. Imposée à la création et au verrouillage anti-redimensionnement par `FixedSizeGeoShapeUtil`.
+export function sizeForKind(kind: EventStormingKind): { w: number; h: number } {
+  return kind.size ?? DEFAULT_POST_IT_SIZE
+}
 
 // `DefaultLabelColorStyle`, le style tldraw utilisé pour le libellé d'un `geo`, n'est pas exporté
 // par le paquet `tldraw` (seul `DefaultColorStyle`, celui de la bordure, l'est). `editor.styleProps`
@@ -71,7 +79,8 @@ export function armPostItTool(editor: Editor, kind: EventStormingKind) {
 export function createPostItAtPagePoint(editor: Editor, kind: EventStormingKind, center: VecLike): TLShapeId {
   applyPostItStyles(editor, kind)
 
-  const topLeft = { x: center.x - POST_IT_SIZE.w / 2, y: center.y - POST_IT_SIZE.h / 2 }
+  const size = sizeForKind(kind)
+  const topLeft = { x: center.x - size.w / 2, y: center.y - size.h / 2 }
   const swimlane = editor.getShapeAtPoint(center, {
     hitInside: true,
     hitFrameInside: true,

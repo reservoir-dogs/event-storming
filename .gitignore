@@ -7,3 +7,4 @@ build/
 *.sqlite-journal
 playwright-report/
 test-results/
+apps/server/data/

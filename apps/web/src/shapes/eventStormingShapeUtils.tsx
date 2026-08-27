@@ -1,5 +1,5 @@
 import { ArrowShapeUtil, GeoShapeUtil } from 'tldraw'
-import { POST_IT_SIZE } from './eventStormingPostIts'
+import { DEFAULT_POST_IT_SIZE, sizeForKind } from './eventStormingPostIts'
 import { resolveEventStormingKind } from './resolveEventStormingKind'
 
 // tldraw entoure par défaut le libellé d'un halo (`--tl-text-outline`, un empilement de
@@ -16,24 +16,35 @@ function hasStrongFill(shape: Parameters<GeoShapeUtil['component']>[0]): boolean
   return resolveEventStormingKind(shape)?.fillEmphasis === 'strong'
 }
 
+// Taille imposée à un shape donné : celle de son type d'event storming s'il est reconnu (via
+// `meta.esKind` ou, à défaut, la couleur pour les post-its antérieurs à ce marquage — voir
+// `resolveEventStormingKind`), sinon la taille par défaut. Un post-it dont le type ne peut pas
+// être déterminé garde ainsi la taille standard plutôt que de ne plus être verrouillé du tout.
+function sizeForShape(shape: { type: string; props: unknown; meta?: unknown }) {
+  const kind = resolveEventStormingKind(shape as Parameters<typeof resolveEventStormingKind>[0])
+  return kind ? sizeForKind(kind) : DEFAULT_POST_IT_SIZE
+}
+
 // Les post-its (rectangles) ne sont pas redimensionnables manuellement, et gardent toujours la
-// même taille quel que soit leur type ou la longueur du libellé saisi : sans ce verrou, tldraw
-// agrandit nativement un rectangle pour faire tenir un premier libellé (`GeoShapeUtil.onBeforeUpdate`
-// / `expandShapeForFirstLabel`), ce qui produisait des post-its de tailles différentes selon le
-// texte tapé.
+// même taille — propre à leur type, l'acteur excepté (voir `EVENT_STORMING_KINDS`) — quelle que
+// soit la longueur du libellé saisi : sans ce verrou, tldraw agrandit nativement un rectangle pour
+// faire tenir un premier libellé (`GeoShapeUtil.onBeforeUpdate` / `expandShapeForFirstLabel`), ce
+// qui produisait des post-its de tailles différentes selon le texte tapé.
 export class FixedSizeGeoShapeUtil extends GeoShapeUtil {
   canResize() {
     return false
   }
 
   onBeforeCreate(shape: Parameters<GeoShapeUtil['onBeforeCreate']>[0]) {
-    return { ...shape, props: { ...shape.props, ...POST_IT_SIZE, growY: 0 } }
+    const size = sizeForShape(shape)
+    return { ...shape, props: { ...shape.props, ...size, growY: 0 } }
   }
 
   onBeforeUpdate(_prev: unknown, next: Parameters<GeoShapeUtil['onBeforeUpdate']>[1]) {
+    const size = sizeForShape(next)
     const { w, h, growY } = next.props
-    if (w === POST_IT_SIZE.w && h === POST_IT_SIZE.h && growY === 0) return
-    return { ...next, props: { ...next.props, ...POST_IT_SIZE, growY: 0 } }
+    if (w === size.w && h === size.h && growY === 0) return
+    return { ...next, props: { ...next.props, ...size, growY: 0 } }
   }
 
   // La `<div>` ajoutée ici n'a pas de `position` propre : les conteneurs internes de tldraw

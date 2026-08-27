@@ -128,6 +128,20 @@ describe('buildMermaidFlowchart', () => {
     ])
   })
 
+  it('includes a query model post-it and the link touching it, like any non-excluded kind', () => {
+    const mermaid = buildMermaidFlowchart(
+      fakeEditor([
+        postIt('a', 'command', 'Consulter le catalogue'),
+        postIt('q', 'query-model', 'Liste des produits'),
+        link('l1', 'a', 'q'),
+      ]),
+    )
+
+    expect(mermaid).toContain('n0["Consulter le catalogue"]')
+    expect(mermaid).toContain('n1["Liste des produits"]')
+    expect(mermaid).toContain('n0 --> n1')
+  })
+
   it('still ignores links that are not bound at both ends', () => {
     const mermaid = buildMermaidFlowchart(
       fakeEditor([postIt('a', 'command', 'Passer commande'), unboundLink('l1', 'a')]),
