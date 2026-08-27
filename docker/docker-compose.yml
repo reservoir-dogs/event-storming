@@ -1,0 +1,45 @@
+services:
+  server:
+    image: reservoirprog/event-storming-server:latest
+    container_name: event-storming-server
+    ports:
+      - "${SERVER_PORT:-4500}:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+    volumes:
+      - server-data:/app/apps/server/data
+    networks:
+      - event-storming-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  web:
+    image: reservoirprog/event-storming-web:latest
+    container_name: event-storming-web
+    ports:
+      - "${WEB_PORT:-4501}:5173"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-}
+      - VITE_SYNC_URL=${VITE_SYNC_URL:-}
+    networks:
+      - event-storming-network
+    depends_on:
+      - server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  event-storming-network:
+    driver: bridge
+
+volumes:
+  server-data:
